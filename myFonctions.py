@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 
-def validite_M0(df, date_col, features, n_clusters=4, pas_jours=15, periode_init=0.2, seuil_ARI=0.7):
+def validite_M0(df, date_col, features, n_clusters=4, pas_jours=5, periode_init=0.2, seuil_ARI=0.7):
     # Tri et mise à l'échelle
     df = df.sort_values(date_col).copy()
     scaler = StandardScaler()
@@ -82,7 +82,7 @@ def entrainer_modele(data, features, n_clusters=4):
     model.fit(data[features])
     return model
 
-def comparer_models(df, date_col, features, n_clusters, periode_init=0.2, pas_jours_list=[5, 10, 15, 20]):
+def comparer_models(df, date_col, features, n_clusters, periode_init=0.2, pas_jours_list=[2, 5, 10, 15]):
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
     df = df.sort_values(date_col)
@@ -150,13 +150,19 @@ def tracer_stabilite_ari(dict_res):
     # On transforme axes en un tableau 1D pour faciliter l'indexation
     axes = axes.flatten()
 
-    for i, pas_jours in enumerate([5, 10, 15, 20]):
+    for i, pas_jours in enumerate([2, 5, 10, 15]):
         df_ari = dict_res[pas_jours]
 
+        # Calcul de la moyenne ARI
+        ari_moyenne = df_ari['ARI'].mean()
+
         # Tracer l'ARI sur chaque sous-graphe
-        axes[i].plot(df_ari['date_Tn'], df_ari['ARI'], marker='o', label=f'Période de {pas_jours} jours')
+        axes[i].plot(df_ari['date_Tn'], df_ari['ARI'], marker='o', label=f'ARI (période {pas_jours} j)')
         axes[i].axhline(0.9, color='green', linestyle='--', label='Seuil haut (0.9)')
         axes[i].axhline(0.5, color='red', linestyle='--', label='Seuil bas (0.5)')
+        axes[i].axhline(ari_moyenne, color='blue', linestyle='-.', label=f'Moyenne ARI = {ari_moyenne:.2f}')
+        
+        # Titres et légendes
         axes[i].set_title(f'Période de {pas_jours} jours')
         axes[i].set_xlabel('Date')
         axes[i].set_ylabel('ARI')
